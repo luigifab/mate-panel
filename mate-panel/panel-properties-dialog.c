@@ -75,9 +75,15 @@ typedef struct {
 	GtkWidget     *opacity_scale;
 	GtkWidget     *opacity_label;
 	GtkWidget     *opacity_legend;
+	GtkWidget     *fg_color_button;
+	GtkWidget     *fg_color_label;
+	GtkWidget     *fg_opacity_scale;
+	GtkWidget     *fg_opacity_label;
+	GtkWidget     *fg_opacity_legend;
 
 	GtkWidget     *writability_warn_general;
 	GtkWidget     *writability_warn_background;
+	GtkWidget     *writability_warn_text;
 
 	/* FIXME: This is a workaround for GTK+ bug #327243 */
 	int            selection_emitted;
@@ -361,6 +367,33 @@ panel_properties_dialog_setup_color_button (PanelPropertiesDialog *dialog,
 		gtk_widget_set_sensitive (dialog->color_button, FALSE);
 		gtk_widget_set_sensitive (dialog->color_label, FALSE);
 		gtk_widget_show (dialog->writability_warn_background);
+	}
+}
+
+static void
+panel_properties_dialog_setup_fg_color_button (PanelPropertiesDialog *dialog,
+					       GtkBuilder            *gui)
+{
+	GdkRGBA color;
+
+	dialog->fg_color_button = PANEL_GTK_BUILDER_GET (gui, "fg_color_button");
+	g_return_if_fail (dialog->fg_color_button != NULL);
+	dialog->fg_color_label = PANEL_GTK_BUILDER_GET (gui, "fg_color_label");
+	g_return_if_fail (dialog->fg_color_label != NULL);
+
+	panel_profile_get_background_color (dialog->toplevel, &color); // @todo
+
+	gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog->fg_color_button),
+	                            &color);
+
+	g_signal_connect_swapped (dialog->fg_color_button, "color-set",
+				  G_CALLBACK (panel_properties_dialog_color_changed), // @todo
+				  dialog);
+
+	if ( ! panel_profile_background_key_is_writable (dialog->toplevel, "color")) {
+		gtk_widget_set_sensitive (dialog->fg_color_button, FALSE);
+		gtk_widget_set_sensitive (dialog->fg_color_label, FALSE);
+		gtk_widget_show (dialog->writability_warn_text);
 	}
 }
 
@@ -844,6 +877,7 @@ panel_properties_dialog_new (PanelToplevel *toplevel)
 
 	dialog->writability_warn_general = PANEL_GTK_BUILDER_GET (gui, "writability_warn_general");
 	dialog->writability_warn_background = PANEL_GTK_BUILDER_GET (gui, "writability_warn_background");
+	dialog->writability_warn_text = PANEL_GTK_BUILDER_GET (gui, "writability_warn_text");
 
 	dialog->general_vbox  = PANEL_GTK_BUILDER_GET (gui, "general_vbox");
 	dialog->general_table = PANEL_GTK_BUILDER_GET (gui, "general_table");
@@ -884,6 +918,8 @@ panel_properties_dialog_new (PanelToplevel *toplevel)
 	panel_properties_dialog_setup_image_chooser     (dialog, gui);
 	panel_properties_dialog_setup_opacity_scale     (dialog, gui);
 	panel_properties_dialog_setup_background_radios (dialog, gui);
+	
+	panel_properties_dialog_setup_fg_color_button      (dialog, gui);
 
 	g_signal_connect (dialog->background_settings,
 			  "changed",
