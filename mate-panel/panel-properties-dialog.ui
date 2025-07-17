@@ -860,7 +860,7 @@ Author: Wolfgang Ulbrich
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Co_lor:</property>
                             <property name="use_underline">True</property>
-                            <property name="mnemonic_widget">color_button</property>
+                            <property name="mnemonic_widget">fg_color_button</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -873,7 +873,7 @@ Author: Wolfgang Ulbrich
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">S_tyle:</property>
                             <property name="use_underline">True</property>
-                            <property name="mnemonic_widget">opacity_scale</property>
+                            <property name="mnemonic_widget">fg_opacity_scale</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
