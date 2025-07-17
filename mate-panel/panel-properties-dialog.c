@@ -350,9 +350,6 @@ panel_properties_dialog_setup_color_button (PanelPropertiesDialog *dialog,
 
 	panel_profile_get_background_color (dialog->toplevel, &color);
 
-	if (!gdk_screen_is_composited (gdk_screen_get_default ()))
-		color.alpha = 1.0;
-
 	gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog->color_button),
 	                            &color);
 
