@@ -690,7 +690,7 @@ Author: Wolfgang Ulbrich
                 <property name="orientation">vertical</property>
                 <property name="spacing">6</property>
                 <child>
-                  <object class="GtkBox" id="fg_writability_warn_background">
+                  <object class="GtkBox" id="writability_warn_text">
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkImage" id="fg_image2">
