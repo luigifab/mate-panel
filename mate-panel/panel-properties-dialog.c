@@ -435,7 +435,6 @@ static void
 panel_properties_dialog_setup_opacity_scale (PanelPropertiesDialog *dialog,
 					     GtkBuilder            *gui)
 {
-	gboolean slider_active;
 	gdouble percentage;
 
 	dialog->opacity_scale = PANEL_GTK_BUILDER_GET (gui, "opacity_scale");
@@ -445,25 +444,11 @@ panel_properties_dialog_setup_opacity_scale (PanelPropertiesDialog *dialog,
 	dialog->opacity_legend = PANEL_GTK_BUILDER_GET (gui, "opacity_legend");
 	g_return_if_fail (dialog->opacity_legend != NULL);
 
-	slider_active = gdk_screen_is_composited (gdk_screen_get_default ());
-
-	if (slider_active) {
-		percentage = panel_profile_get_background_opacity (dialog->toplevel);
-	} else {
-		percentage = 100.0;
-	}
-
+	percentage = panel_profile_get_background_opacity (dialog->toplevel);
 	gtk_range_set_value (GTK_RANGE (dialog->opacity_scale), percentage);
 
 	if (!panel_profile_background_key_is_writable (dialog->toplevel, "opacity")) {
-		slider_active = FALSE;
 		gtk_widget_show (dialog->writability_warn_background);
-	}
-
-	if (!slider_active) {
-		gtk_widget_set_sensitive (dialog->opacity_scale, FALSE);
-		gtk_widget_set_sensitive (dialog->opacity_label, FALSE);
-		gtk_widget_set_sensitive (dialog->opacity_legend, FALSE);
 	}
 
 	g_signal_connect_swapped (dialog->opacity_scale, "value-changed",
@@ -737,21 +722,6 @@ panel_properties_dialog_update_background_image (PanelPropertiesDialog *dialog,
 }
 
 static void
-panel_properties_dialog_update_opacity (PanelPropertiesDialog *dialog,
-                                        gdouble                percentage)
-{
-	gboolean slider_active;
-
-	slider_active = gdk_screen_is_composited (gdk_screen_get_default ());
-
-	if (!slider_active) {
-		percentage = 100.0;
-	}
-
-	gtk_range_set_value (GTK_RANGE (dialog->opacity_scale), percentage);
-}
-
-static void
 panel_properties_dialog_background_notify (GSettings             *settings,
 					   gchar                 *key,
 					   PanelPropertiesDialog *dialog)
@@ -766,7 +736,7 @@ panel_properties_dialog_background_notify (GSettings             *settings,
 		char *color = g_settings_get_string (settings, key);
 		panel_properties_dialog_update_background_color (dialog, color);
 		gdouble percentage = panel_profile_get_background_opacity (dialog->toplevel);
-		panel_properties_dialog_update_opacity (dialog, percentage);
+		gtk_range_set_value (GTK_RANGE (dialog->opacity_scale), percentage);
 		g_free (color);
 	}
 	else if (!strcmp (key, "image"))
