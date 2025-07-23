@@ -344,6 +344,19 @@ panel_properties_dialog_color_changed (PanelPropertiesDialog *dialog,
 }
 
 static void
+panel_properties_dialog_fg_color_changed (PanelPropertiesDialog *dialog,
+				          GtkColorChooser       *color_button)
+{
+	GdkRGBA color;
+
+	g_assert (dialog->fg_color_button == GTK_WIDGET (color_button));
+
+	gtk_color_chooser_get_rgba (color_button, &color);
+	panel_profile_set_background_color (dialog->toplevel, &color);
+	panel_properties_dialog_opacity_changed (dialog);
+}
+
+static void
 panel_properties_dialog_setup_color_button (PanelPropertiesDialog *dialog,
 					    GtkBuilder            *gui)
 {
@@ -387,7 +400,7 @@ panel_properties_dialog_setup_fg_color_button (PanelPropertiesDialog *dialog,
 	                            &color);
 
 	g_signal_connect_swapped (dialog->fg_color_button, "color-set",
-				  G_CALLBACK (panel_properties_dialog_color_changed), // @todo
+				  G_CALLBACK (panel_properties_dialog_fg_color_changed),
 				  dialog);
 
 	if ( ! panel_profile_background_key_is_writable (dialog->toplevel, "color")) {
@@ -567,6 +580,48 @@ panel_properties_dialog_setup_background_radios (PanelPropertiesDialog *dialog,
 		gtk_widget_set_sensitive (dialog->color_radio, FALSE);
 		gtk_widget_set_sensitive (dialog->image_radio, FALSE);
 		gtk_widget_show (dialog->writability_warn_background);
+	}
+}
+
+static void
+panel_properties_dialog_setup_text_radios (PanelPropertiesDialog *dialog,
+                                           GtkBuilder            *gui)
+{
+	PanelBackgroundType  background_type;
+	GtkWidget           *active_radio;
+
+	dialog->fg_default_radio = PANEL_GTK_BUILDER_GET (gui, "fg_default_radio");
+	dialog->fg_color_radio   = PANEL_GTK_BUILDER_GET (gui, "fg_color_radio");
+	dialog->fg_color_widgets = PANEL_GTK_BUILDER_GET (gui, "fg_color_widgets");
+
+	background_type = panel_profile_get_background_type (dialog->toplevel); // @todo
+	switch (background_type) {
+	case PANEL_BACK_NONE:
+		active_radio = dialog->fg_default_radio;
+		break;
+	case PANEL_BACK_COLOR:
+		active_radio = dialog->fg_color_radio;
+		break;
+	default:
+		active_radio = NULL;
+		g_assert_not_reached ();
+	}
+
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (active_radio), TRUE);
+
+	panel_properties_dialog_upd_sensitivity (dialog, background_type);
+
+	g_signal_connect_swapped (dialog->fg_default_radio, "toggled",
+				  G_CALLBACK (panel_properties_dialog_background_toggled),
+				  dialog);
+	g_signal_connect_swapped (dialog->fg_color_radio, "toggled",
+				  G_CALLBACK (panel_properties_dialog_background_toggled),
+				  dialog);
+
+	if ( ! panel_profile_background_key_is_writable (dialog->toplevel, "type")) {
+		gtk_widget_set_sensitive (dialog->fg_default_radio, FALSE);
+		gtk_widget_set_sensitive (dialog->fg_color_radio, FALSE);
+		gtk_widget_show (dialog->writability_warn_text);
 	}
 }
 
@@ -914,12 +969,14 @@ panel_properties_dialog_new (PanelToplevel *toplevel)
 			  G_CALLBACK (panel_properties_dialog_toplevel_notify),
 			  dialog);
 
+	// background
 	panel_properties_dialog_setup_color_button      (dialog, gui);
 	panel_properties_dialog_setup_image_chooser     (dialog, gui);
 	panel_properties_dialog_setup_opacity_scale     (dialog, gui);
 	panel_properties_dialog_setup_background_radios (dialog, gui);
-	
-	panel_properties_dialog_setup_fg_color_button      (dialog, gui);
+	// text
+	panel_properties_dialog_setup_fg_color_button   (dialog, gui);
+	panel_properties_dialog_setup_text_radios       (dialog, gui);
 
 	g_signal_connect (dialog->background_settings,
 			  "changed",
