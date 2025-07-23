@@ -75,6 +75,9 @@ typedef struct {
 	GtkWidget     *opacity_scale;
 	GtkWidget     *opacity_label;
 	GtkWidget     *opacity_legend;
+	GtkWidget     *fg_default_radio;
+	GtkWidget     *fg_color_radio;
+	GtkWidget     *fg_color_widgets;
 	GtkWidget     *fg_color_button;
 	GtkWidget     *fg_color_label;
 	GtkWidget     *fg_opacity_scale;
