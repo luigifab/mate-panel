@@ -48,7 +48,6 @@ typedef struct {
 	GSettings     *background_settings;
 
 	GtkWidget     *properties_dialog;
-
 	GtkWidget     *general_table;
 	GtkWidget     *general_vbox;
 	GtkWidget     *orientation_combo;
@@ -64,17 +63,19 @@ typedef struct {
 	GtkWidget     *autohide_toggle;
 	GtkWidget     *hidebuttons_toggle;
 	GtkWidget     *arrows_toggle;
+
 	GtkWidget     *default_radio;
 	GtkWidget     *color_radio;
-	GtkWidget     *image_radio;
 	GtkWidget     *color_widgets;
-	GtkWidget     *image_widgets;
 	GtkWidget     *color_button;
 	GtkWidget     *color_label;
+	GtkWidget     *image_radio;
+	GtkWidget     *image_widgets;
 	GtkWidget     *image_chooser;
 	GtkWidget     *opacity_scale;
 	GtkWidget     *opacity_label;
 	GtkWidget     *opacity_legend;
+
 	GtkWidget     *fg_default_radio;
 	GtkWidget     *fg_color_radio;
 	GtkWidget     *fg_color_widgets;
@@ -398,6 +399,10 @@ panel_properties_dialog_setup_fg_color_button (PanelPropertiesDialog *dialog,
 	g_return_if_fail (dialog->fg_color_label != NULL);
 
 	panel_profile_get_background_color (dialog->toplevel, &color); // @todo
+		color->red   = 1.;
+		color->green = 1.;
+		color->blue  = 1.;
+		color->alpha  = 1.;
 
 	gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog->fg_color_button),
 	                            &color);
@@ -478,6 +483,21 @@ panel_properties_dialog_opacity_changed (PanelPropertiesDialog *dialog)
 }
 
 static void
+panel_properties_dialog_fg_opacity_changed (PanelPropertiesDialog *dialog)
+{
+	gdouble percentage;
+
+	percentage = gtk_range_get_value (GTK_RANGE (dialog->fg_opacity_scale));
+
+	if (percentage >= 98)
+		percentage = 100;
+	else if (percentage <= 2)
+		percentage = 0;
+
+	//panel_profile_set_background_opacity (dialog->toplevel, percentage); // @todo
+}
+
+static void
 panel_properties_dialog_setup_opacity_scale (PanelPropertiesDialog *dialog,
 					     GtkBuilder            *gui)
 {
@@ -535,6 +555,9 @@ panel_properties_dialog_upd_sensitivity (PanelPropertiesDialog *dialog,
 				  background_type == PANEL_BACK_COLOR);
 	gtk_widget_set_sensitive (dialog->image_widgets,
 				  background_type == PANEL_BACK_IMAGE);
+	
+	gtk_widget_set_sensitive (dialog->fg_color_widgets,
+				  background_type == PANEL_BACK_COLOR); // @todo
 }
 
 static void
@@ -552,6 +575,25 @@ panel_properties_dialog_background_toggled (PanelPropertiesDialog *dialog,
 		background_type = PANEL_BACK_COLOR;
 	else if (radio == dialog->image_radio)
 		background_type = PANEL_BACK_IMAGE;
+
+	panel_properties_dialog_upd_sensitivity (dialog, background_type);
+
+	panel_profile_set_background_type (dialog->toplevel, background_type);
+}
+
+static void
+panel_properties_dialog_text_toggled (PanelPropertiesDialog *dialog,
+				      GtkWidget             *radio)
+{
+	PanelBackgroundType background_type = PANEL_BACK_NONE;
+
+	if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (radio)))
+		return;
+
+	if (radio == dialog->fg_default_radio)
+		background_type = PANEL_BACK_NONE;
+	else if (radio == dialog->fg_color_radio)
+		background_type = PANEL_BACK_COLOR;
 
 	panel_properties_dialog_upd_sensitivity (dialog, background_type);
 
@@ -638,10 +680,10 @@ panel_properties_dialog_setup_text_radios (PanelPropertiesDialog *dialog,
 	panel_properties_dialog_upd_sensitivity (dialog, background_type);
 
 	g_signal_connect_swapped (dialog->fg_default_radio, "toggled",
-				  G_CALLBACK (panel_properties_dialog_background_toggled),
+				  G_CALLBACK (panel_properties_dialog_text_toggled),
 				  dialog);
 	g_signal_connect_swapped (dialog->fg_color_radio, "toggled",
-				  G_CALLBACK (panel_properties_dialog_background_toggled),
+				  G_CALLBACK (panel_properties_dialog_text_toggled),
 				  dialog);
 
 	if ( ! panel_profile_background_key_is_writable (dialog->toplevel, "type")) {
@@ -1002,7 +1044,7 @@ panel_properties_dialog_new (PanelToplevel *toplevel)
 	panel_properties_dialog_setup_background_radios (dialog, gui);
 	// text
 	panel_properties_dialog_setup_fg_color_button   (dialog, gui);
-	panel_properties_dialog_setup_fg_opacity_scale     (dialog, gui);
+	panel_properties_dialog_setup_fg_opacity_scale  (dialog, gui);
 	panel_properties_dialog_setup_text_radios       (dialog, gui);
 
 	g_signal_connect (dialog->background_settings,
