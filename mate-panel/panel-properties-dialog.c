@@ -503,6 +503,31 @@ panel_properties_dialog_setup_opacity_scale (PanelPropertiesDialog *dialog,
 }
 
 static void
+panel_properties_dialog_setup_fg_opacity_scale (PanelPropertiesDialog *dialog,
+						GtkBuilder            *gui)
+{
+	gdouble percentage;
+
+	dialog->opacity_scale = PANEL_GTK_BUILDER_GET (gui, "fg_opacity_scale");
+	g_return_if_fail (dialog->fg_opacity_scale != NULL);
+	dialog->opacity_label = PANEL_GTK_BUILDER_GET (gui, "fg_opacity_label");
+	g_return_if_fail (dialog->fg_opacity_label != NULL);
+	dialog->opacity_legend = PANEL_GTK_BUILDER_GET (gui, "fg_opacity_legend");
+	g_return_if_fail (dialog->fg_opacity_legend != NULL);
+
+	percentage = panel_profile_get_background_opacity (dialog->toplevel); // @todo
+	gtk_range_set_value (GTK_RANGE (dialog->fg_opacity_scale), percentage);
+
+	if (!panel_profile_background_key_is_writable (dialog->toplevel, "opacity")) {
+		gtk_widget_show (dialog->writability_warn_text);
+	}
+
+	g_signal_connect_swapped (dialog->fg_opacity_scale, "value-changed",
+				  G_CALLBACK (panel_properties_dialog_opacity_changed),
+				  dialog);
+}
+
+static void
 panel_properties_dialog_upd_sensitivity (PanelPropertiesDialog *dialog,
 					 PanelBackgroundType    background_type)
 {
@@ -523,10 +548,8 @@ panel_properties_dialog_background_toggled (PanelPropertiesDialog *dialog,
 
 	if (radio == dialog->default_radio)
 		background_type = PANEL_BACK_NONE;
-
 	else if (radio == dialog->color_radio)
 		background_type = PANEL_BACK_COLOR;
-
 	else if (radio == dialog->image_radio)
 		background_type = PANEL_BACK_IMAGE;
 
@@ -588,7 +611,7 @@ panel_properties_dialog_setup_background_radios (PanelPropertiesDialog *dialog,
 
 static void
 panel_properties_dialog_setup_text_radios (PanelPropertiesDialog *dialog,
-                                           GtkBuilder            *gui)
+					   GtkBuilder            *gui)
 {
 	PanelBackgroundType  background_type;
 	GtkWidget           *active_radio;
@@ -979,6 +1002,7 @@ panel_properties_dialog_new (PanelToplevel *toplevel)
 	panel_properties_dialog_setup_background_radios (dialog, gui);
 	// text
 	panel_properties_dialog_setup_fg_color_button   (dialog, gui);
+	panel_properties_dialog_setup_fg_opacity_scale     (dialog, gui);
 	panel_properties_dialog_setup_text_radios       (dialog, gui);
 
 	g_signal_connect (dialog->background_settings,
