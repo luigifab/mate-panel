@@ -356,8 +356,8 @@ panel_properties_dialog_fg_color_changed (PanelPropertiesDialog *dialog,
 	g_assert (dialog->fg_color_button == GTK_WIDGET (color_button));
 
 	gtk_color_chooser_get_rgba (color_button, &color);
-	panel_profile_set_background_color (dialog->toplevel, &color);
-	panel_properties_dialog_opacity_changed (dialog);
+	//panel_profile_set_background_color (dialog->toplevel, &color); @todo
+	//panel_properties_dialog_opacity_changed (dialog);
 }
 
 static void
@@ -398,11 +398,11 @@ panel_properties_dialog_setup_fg_color_button (PanelPropertiesDialog *dialog,
 	dialog->fg_color_label = PANEL_GTK_BUILDER_GET (gui, "fg_color_label");
 	g_return_if_fail (dialog->fg_color_label != NULL);
 
-	panel_profile_get_background_color (dialog->toplevel, &color); // @todo
-		color->red   = 1.;
-		color->green = 1.;
-		color->blue  = 1.;
-		color->alpha  = 1.;
+	//panel_profile_get_background_color (dialog->toplevel, &color); // @todo
+	color->red   = 1.;
+	color->green = 1.;
+	color->blue  = 1.;
+	color->alpha = 1.;
 
 	gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog->fg_color_button),
 	                            &color);
@@ -494,7 +494,7 @@ panel_properties_dialog_fg_opacity_changed (PanelPropertiesDialog *dialog)
 	else if (percentage <= 2)
 		percentage = 0;
 
-	//panel_profile_set_background_opacity (dialog->toplevel, percentage); // @todo
+	//panel_profile_set_background_opacity (dialog->toplevel, percentage); @todo
 }
 
 static void
@@ -561,6 +561,14 @@ panel_properties_dialog_upd_sensitivity (PanelPropertiesDialog *dialog,
 }
 
 static void
+panel_properties_dialog_upd_fg_sensitivity (PanelPropertiesDialog *dialog,
+					 PanelBackgroundType    background_type)
+{
+	gtk_widget_set_sensitive (dialog->fg_color_widgets,
+				  background_type == PANEL_BACK_COLOR); // @todo
+}
+
+static void
 panel_properties_dialog_background_toggled (PanelPropertiesDialog *dialog,
 					    GtkWidget             *radio)
 {
@@ -585,19 +593,19 @@ static void
 panel_properties_dialog_text_toggled (PanelPropertiesDialog *dialog,
 				      GtkWidget             *radio)
 {
-	PanelBackgroundType background_type = PANEL_BACK_NONE;
+	PanelBackgroundType foreground_type = PANEL_BACK_NONE;
 
 	if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (radio)))
 		return;
 
 	if (radio == dialog->fg_default_radio)
-		background_type = PANEL_BACK_NONE;
+		foreground_type = PANEL_BACK_NONE;
 	else if (radio == dialog->fg_color_radio)
-		background_type = PANEL_BACK_COLOR;
+		foreground_type = PANEL_BACK_COLOR;
 
-	panel_properties_dialog_upd_sensitivity (dialog, background_type);
+	panel_properties_dialog_upd_fg_sensitivity (dialog, foreground_type);
 
-	panel_profile_set_background_type (dialog->toplevel, background_type);
+	//panel_profile_set_background_type (dialog->toplevel, foreground_type); @todo
 }
 
 static void
@@ -655,15 +663,15 @@ static void
 panel_properties_dialog_setup_text_radios (PanelPropertiesDialog *dialog,
 					   GtkBuilder            *gui)
 {
-	PanelBackgroundType  background_type;
+	PanelBackgroundType  foreground_type;
 	GtkWidget           *active_radio;
 
 	dialog->fg_default_radio = PANEL_GTK_BUILDER_GET (gui, "fg_default_radio");
 	dialog->fg_color_radio   = PANEL_GTK_BUILDER_GET (gui, "fg_color_radio");
 	dialog->fg_color_widgets = PANEL_GTK_BUILDER_GET (gui, "fg_color_widgets");
 
-	background_type = panel_profile_get_background_type (dialog->toplevel); // @todo
-	switch (background_type) {
+	foreground_type = PANEL_BACK_NONE; //panel_profile_get_background_type (dialog->toplevel); @todo
+	switch (foreground_type) {
 	case PANEL_BACK_NONE:
 		active_radio = dialog->fg_default_radio;
 		break;
@@ -677,7 +685,7 @@ panel_properties_dialog_setup_text_radios (PanelPropertiesDialog *dialog,
 
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (active_radio), TRUE);
 
-	panel_properties_dialog_upd_sensitivity (dialog, background_type);
+	panel_properties_dialog_upd_fg_sensitivity (dialog, foreground_type);
 
 	g_signal_connect_swapped (dialog->fg_default_radio, "toggled",
 				  G_CALLBACK (panel_properties_dialog_text_toggled),
