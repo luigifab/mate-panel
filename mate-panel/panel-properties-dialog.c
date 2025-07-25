@@ -398,11 +398,11 @@ panel_properties_dialog_setup_fg_color_button (PanelPropertiesDialog *dialog,
 	dialog->fg_color_label = PANEL_GTK_BUILDER_GET (gui, "fg_color_label");
 	g_return_if_fail (dialog->fg_color_label != NULL);
 
-	panel_profile_get_background_color (dialog->toplevel, &color); // @todo
-	color->red   = 1.;
-	color->green = 1.;
-	color->blue  = 1.;
-	color->alpha = 1.;
+	//panel_profile_get_background_color (dialog->toplevel, &color); @todo
+	color.red   = 0.4;
+	color.green = 0.4;
+	color.blue  = 0.;
+	color.alpha = 1.;
 
 	gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog->fg_color_button),
 	                            &color);
